@@ -273,8 +273,8 @@ for i, state in enumerate(five_states):
     five_states_merged['date_y'] = five_states_merged['date_y'].astype(str)
     ax = axes[i]
     ax.plot(five_states_merged['date_x'], five_states_merged['unemp_rate'], label='Unemployment Rate')
-    ax.plot(five_states_merged['date_y'], five_states_merged['LFD_EPU_C'], label='LFD of EPU-C')  # Corrected variable name
-    ax.set_title(f'{state}')
+    ax.plot(five_states_merged['date_y'], five_states_merged['LFD_EPU_C'], label='LFD of EPU-C')  
+    ax.set_title('The unemployment rate and the LFD of EPU-C over time of 5 US States')
     ax.legend()
     axes[i].tick_params(axis='x', rotation=45, labelright=True)
     axes[-1].set_xlabel('Date')
