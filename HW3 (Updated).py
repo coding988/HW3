@@ -253,7 +253,7 @@ data_ump_epu.dropna(inplace=True)
 #    2.2: Select five states and create one Matplotlib figure that shows the unemployment rate
 #         and the LFD of EPU-C over time for each state. Save the figure and commit it with 
 #         your code.
-five_states = ['California', 'Louisiana', 'New York', 'Maine', 'Illinois']
+five_states = ['Lousiana', 'Maine', 'Kentucky', 'Florida', 'Illinois']
 
 emp_lfd_state_data = data_ump_epu[data_ump_epu['state'].isin(five_states)]
 emp_lfd_state_data.dropna(subset=['unemp_rate', 'LFD_EPU_C'], inplace=True)##dropping missing values
@@ -268,9 +268,6 @@ emp_lfd_state_data.dropna(subset=['unemp_rate', 'LFD_EPU_C'], inplace=True)
 print(emp_lfd_state_data.info())
 print(emp_lfd_state_data.columns)
 
-
-
-
 ##using a lopp to creating a plot
 plt.figure(figsize=(12, 8))
 for state in five_states:
@@ -283,7 +280,7 @@ plt.ylabel('Value')
 plt.legend()
 plt.xticks(rotation=45)
 plt.tight_layout()
-plt.savefig('unemp_epu_plot.png')
+plt.savefig('question_2_2_figure.png')
 plt.show()
 
 #    2.3: Using statsmodels, regress the unemployment rate on the LFD of EPU-C and fixed
