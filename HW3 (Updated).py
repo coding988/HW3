@@ -162,7 +162,7 @@ for ax in axes[:, 1]:
     ax.yaxis.set_ticklabels([])
 
 # Add a title to the figure
-fig.suptitle('Changes in MPG', fontsize=16)
+fig.suptitle('Changes in MPG', fontsize=18)
 
 # Add a y-label to the figure
 fig.text(0.06, 0.5, 'mpg', ha='center', va='center', rotation='vertical')
@@ -187,6 +187,8 @@ plt.title('Fuel Efficiency Across Countries')
 plt.xlabel('Region')
 plt.ylabel('MPG')
 plt.show()
+##The cars in the US are least fuel efficient compared to Japan and Europe
+
 plt.savefig('question_1_6_figure.png')
 
 # Question 1.7: Using Seaborn, create a scatter plot of mpg versus displacement,
@@ -202,6 +204,7 @@ plt.xlabel('Displacement')
 plt.ylabel('MPG')
 plt.legend(title='Origin')
 plt.show()
+#The cars of the US show a greater degree of variance in displacement, compared to cars of japan or europe origin
 plt.savefig('question_1_7_figure.png')
 
 
@@ -210,14 +213,14 @@ plt.savefig('question_1_7_figure.png')
 # as the data from the policy_uncertainty.xlsx file from homework 2 (you do not have to make
 # any of the changes to this data that were part of HW2, unless you need to in order to 
 # answer the following questions).
-#    2.1: Merge both dataframes together
-# 2.1: Load the unemployment data and the policy uncertainty data
+
+# 2.1: Loading and Merging both dataframes together
 unemp_data = pd.read_csv(r'C:\Users\arifm\OneDrive\Documents\GitHub\HW3\unemp.csv')
 epu_data = pd.read_excel(r'C:\Users\arifm\OneDrive\Documents\GitHub\HW3\policy_uncertainty.xlsx')
-unemp_data.columns = unemp_data.columns.str.lower()  #converting column name to lowercase
-epu_data.columns = epu_data.columns.str.lower()  #converting column name to lowercase
+unemp_data.columns = unemp_data.columns.str.lower()  #converting column names to lowercase for dataframe unemployment
+epu_data.columns = epu_data.columns.str.lower()  #converting column names to lowercase for dataframe policy uncertainty
 
-#creating function to convert state name to abrev
+#defining a function to convert state names to abbreviations
 import us
 def state_abbrev(state_fullname):
     try:
@@ -233,10 +236,11 @@ epu_data['state'] = epu_data['state'].apply(state_abbrev)
 # converting from month year to date format of epu dataframe and converting to same date format
 epu_data['date'] = pd.to_datetime(epu_data[['year', 'month']].assign(day=1)) 
 
-epu_data['date'] = epu_data['date'].dt.strftime('%Y-%m-%d') #same date format
+epu_data['date'] = epu_data['date'].dt.strftime('%Y-%m-%d') 
 
 # Merging dataframes "Unemployment" & "Policy Uncertainty"
 data_ump_epu = pd.merge(unemp_data, epu_data, on='state', how='inner')
+data_ump_epu.dropna(inplace=True)
 print(data_ump_epu.columns)
 
 #    2.2: Calculate the log-first-difference (LFD) of the EPU-C data
@@ -245,15 +249,29 @@ import statsmodels.api as sm
 data_ump_epu['LFD_EPU_C'] = data_ump_epu['epu_composite'].diff().apply(lambda x: x / data_ump_epu['epu_composite'].shift(1))
 data_ump_epu.dropna(inplace=True)
 
+
 #    2.2: Select five states and create one Matplotlib figure that shows the unemployment rate
 #         and the LFD of EPU-C over time for each state. Save the figure and commit it with 
 #         your code.
 five_states = ['California', 'Louisiana', 'New York', 'Maine', 'Illinois']
 
 emp_lfd_state_data = data_ump_epu[data_ump_epu['state'].isin(five_states)]
+emp_lfd_state_data.dropna(subset=['unemp_rate', 'LFD_EPU_C'], inplace=True)##dropping missing values
+
+# Filter data for the five states
+emp_lfd_state_data = data_ump_epu[data_ump_epu['state'].isin(five_states)]
+
+# Drop missing values from the selected columns
+emp_lfd_state_data.dropna(subset=['unemp_rate', 'LFD_EPU_C'], inplace=True)
+
+
+print(emp_lfd_state_data.info())
 print(emp_lfd_state_data.columns)
 
-##creating a plot
+
+
+
+##using a lopp to creating a plot
 plt.figure(figsize=(12, 8))
 for state in five_states:
     state_subset = data_ump_epu[data_ump_epu['state'] == state]
@@ -271,9 +289,7 @@ plt.show()
 #    2.3: Using statsmodels, regress the unemployment rate on the LFD of EPU-C and fixed
 #         effects for states. Include an intercept.
 
-# Using statsmodels, regress the unemployment rate on the LFD of EPU-C and fixed effects for states
-
-X = sm.add_constant(emp_lfd_state_data['LFD_EPU_C']) #adding an X intercept
+X = sm.add_constant(emp_lfd_state_data['LFD_EPU_C']) #adding a intercept
 y = emp_lfd_state_data['unemp_rate']
 ols_model = sm.OLS(y, X)
 reg_results = ols_model.fit()
@@ -284,7 +300,7 @@ print(reg_results.summary())
 #         might in an abstract.
 
 # Results summary
-# Overall there is a negative correlation of 
-#An increase in unmployment rate bt 1% de
+# Overall there is a negative correlation of unemployment rate with the log-first-difference (LFD) of the EPU-C data; however, the relationship is significant with a p-value of <0.05.
+#The R-squared value suggests that a reasonable degree of the variation in the unemployment rate can be explained by the the log-first-difference (LFD) of the EPU-C data
 
 
