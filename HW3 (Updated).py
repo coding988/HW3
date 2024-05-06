@@ -36,11 +36,11 @@ y2 = [np.sin(v)+10 for v in range(len(x))]
 
 # Question 1.1
 plt.figure(figsize=(10, 6))
-plt.scatter(x, y1, label='y1', color='blue')
-plt.plot(x, y2, label='y2', color='red')
+plt.scatter(x, y1, label='y1', color='orange')
+plt.plot(x, y2, label='y2', color='purple')
 plt.title('HW3 Q1.1')
 plt.xlabel('Date')
-plt.ylabel('Values')
+plt.ylabel('Results')
 plt.legend()
 plt.xticks(rotation=45)
 plt.tight_layout()
@@ -51,11 +51,11 @@ plt.savefig('q1_1_plot.png')
 # question_2_figure.png.
 
 plt.figure(figsize=(8, 6))
-plt.plot(x, y1, label='y1', color='blue')
-plt.plot(x, y2, label='y2', color='red')
+plt.plot(x, y1, label='y1', color='orange')
+plt.plot(x, y2, label='y2', color='green')
 plt.title('HW3 Q1.2')
 plt.xlabel('Date')
-plt.ylabel('Values')
+plt.ylabel('Results')
 plt.legend()
 plt.xticks(rotation=45)
 plt.tight_layout()
@@ -73,30 +73,30 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-# Load the dataset
+# Loading the dataset
 mpg_data = pd.read_csv(r'C:\Users\arifm\OneDrive\Documents\GitHub\HW3\mpg.csv')
 
-# Plotting
+# Plotting the figure
 plt.figure(figsize=(18, 6))
 
-# Plot 1: mpg vs. displacement
+# Plot 1: mpg versus displacement
 plt.subplot(1, 3, 1)
 plt.scatter(mpg_data['displacement'], mpg_data['mpg'], alpha=0.7)
-plt.title('MPG vs. Displacement')
+plt.title('MPG & Displacement')
 plt.xlabel('Displacement')
 plt.ylabel('MPG')
 plt.savefig('question_1_3a_figure.png')
-# Plot 2: mpg vs. horsepower
+# Plot 2: mpg versus horsepower
 plt.subplot(1, 3, 2)
 plt.scatter(mpg_data['horsepower'], mpg_data['mpg'], alpha=0.7)
-plt.title('MPG vs. Horsepower')
+plt.title('MPG & Horsepower')
 plt.xlabel('Horsepower')
 plt.ylabel('MPG')
 plt.savefig('question_1_3b_figure.png')
-# Plot 3: mpg vs. weight
+# Plot 3: mpg versus weight
 plt.subplot(1, 3, 3)
 plt.scatter(mpg_data['weight'], mpg_data['mpg'], alpha=0.7)
-plt.title('MPG vs. Weight')
+plt.title('MPG & Weight')
 plt.xlabel('Weight')
 plt.ylabel('MPG')
 plt.tight_layout()
@@ -110,20 +110,20 @@ plt.savefig('question_1_3c_figure.png')
 # up the y-axis.
 
 import seaborn as sns
-
-# Plotting mpg vs. cylinders using scatter plot
+# Plotting mpg versus cylinders using scatterplot
 plt.figure(figsize=(8, 6))
 plt.scatter(mpg_data['cylinders'], mpg_data['mpg'])
-plt.title('MPG vs. Cylinders')
+plt.title('MPG & Cylinders')
 plt.xlabel('Cylinders')
 plt.ylabel('MPG')
 plt.show()
 plt.savefig('question_1_4a_figure.png')
+#The plot lacks any clarity to show any trend or pattern which makes it challenging to differentiate between individual data points ##
 
 # Plotting box plot using Seaborn
 plt.figure(figsize=(8, 6))
 sns.boxplot(x='cylinders', y='mpg', data=mpg_data)
-plt.title('MPG Distribution Across Cylinders')
+plt.title('MPG Distribution of the Cylinders')
 plt.xlabel('Cylinders')
 plt.ylabel('MPG')
 plt.show()
@@ -183,7 +183,7 @@ plt.show()
 # Plotting box plot using Seaborn
 plt.figure(figsize=(8, 6))
 sns.boxplot(x='origin', y='mpg', data=mpg_data)
-plt.title('Fuel Efficiency Across Regions')
+plt.title('Fuel Efficiency Across Countries')
 plt.xlabel('Region')
 plt.ylabel('MPG')
 plt.show()
@@ -197,7 +197,7 @@ plt.savefig('question_1_6_figure.png')
 # Plotting scatter plot using Seaborn
 plt.figure(figsize=(10, 6))
 sns.scatterplot(x='displacement', y='mpg', hue='origin', data=mpg_data)
-plt.title('MPG vs. Displacement by Origin')
+plt.title('MPG versus Displacement by Country of Origin')
 plt.xlabel('Displacement')
 plt.ylabel('MPG')
 plt.legend(title='Origin')
@@ -219,60 +219,72 @@ epu_data.columns = epu_data.columns.str.lower()  #converting column name to lowe
 
 #creating function to convert state name to abrev
 import us
-def state_name_to_abbrev(state_name):
+def state_abbrev(state_fullname):
     try:
-        state = us.states.lookup(state_name)
+        state = us.states.lookup(state_fullname)
         if state:
             return state.abbr
         else:
             return None
     except ValueError:
         return None
-epu_data['state'] = epu_data['state'].apply(state_name_to_abbrev)
+epu_data['state'] = epu_data['state'].apply(state_abbrev)
 
-#from month year to date format
-epu_data['date'] = pd.to_datetime(epu_data[['year', 'month']].assign(day=1)) #converting to same date format
-epu_data.drop(['year', 'month'], axis=1, inplace=True) #droping those columns as no use
+# converting from month year to date format of epu dataframe and converting to same date format
+epu_data['date'] = pd.to_datetime(epu_data[['year', 'month']].assign(day=1)) 
+
 epu_data['date'] = epu_data['date'].dt.strftime('%Y-%m-%d') #same date format
 
-
 # Merging dataframes "Unemployment" & "Policy Uncertainty"
-merged_data = pd.merge(unemp_data, epu_data, on='state', how='inner')
-print(merged_data.columns)
+data_ump_epu = pd.merge(unemp_data, epu_data, on='state', how='inner')
+print(data_ump_epu.columns)
 
 #    2.2: Calculate the log-first-difference (LFD) of the EPU-C data
 import pandas as pd
 import statsmodels.api as sm
-merged_data['LFD_EPU_C'] = merged_data['epu_composite'].diff().apply(lambda x: x / merged_data['epu_composite'].shift(1))
-merged_data.dropna(inplace=True)
+data_ump_epu['LFD_EPU_C'] = data_ump_epu['epu_composite'].diff().apply(lambda x: x / data_ump_epu['epu_composite'].shift(1))
+data_ump_epu.dropna(inplace=True)
 
 #    2.2: Select five states and create one Matplotlib figure that shows the unemployment rate
 #         and the LFD of EPU-C over time for each state. Save the figure and commit it with 
 #         your code.
-selected_states = ['California', 'Texas', 'New York', 'Florida', 'Illinois']
-state_data = merged_data[merged_data['state'].isin(selected_states)]
-print(state_data.columns)
+five_states = ['California', 'Louisiana', 'New York', 'Maine', 'Illinois']
 
-# Check for missing values in 'LFD_EPU_C' and 'unemp_rate' columns
-print("Missing values in 'LFD_EPU_C':", state_data['LFD_EPU_C'].isnull().sum())
-print("Missing values in 'unemp_rate':", state_data['unemp_rate'].isnull().sum())
+emp_lfd_state_data = data_ump_epu[data_ump_epu['state'].isin(five_states)]
+print(emp_lfd_state_data.columns)
 
-# Drop rows with missing values
-state_data.dropna(subset=['LFD_EPU_C', 'unemp_rate'], inplace=True)
+##creating a plot
+plt.figure(figsize=(12, 8))
+for state in five_states:
+    state_subset = data_ump_epu[data_ump_epu['state'] == state]
+    plt.plot(state_subset['date_y'], state_subset['unemp_rate'], label=f'{state} Unemployment Rate')
+    plt.plot(state_subset['date_y'], state_subset['LFD_EPU_C'], label=f'{state} LFD EPU-C')
+plt.title('Unemployment Rate and LFD of EPU-C Over Time for the five US States')
+plt.xlabel('Date')
+plt.ylabel('Value')
+plt.legend()
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('unemp_epu_plot.png')
+plt.show()
 
 #    2.3: Using statsmodels, regress the unemployment rate on the LFD of EPU-C and fixed
 #         effects for states. Include an intercept.
+
 # Using statsmodels, regress the unemployment rate on the LFD of EPU-C and fixed effects for states
-X = sm.add_constant(state_data['LFD_EPU_C'])
-y = state_data['unemp_rate']
-model = sm.OLS(y, X)
-results = model.fit()
+
+X = sm.add_constant(emp_lfd_state_data['LFD_EPU_C']) #adding an X intercept
+y = emp_lfd_state_data['unemp_rate']
+ols_model = sm.OLS(y, X)
+reg_results = ols_model.fit()
+print(reg_results.summary())
 
 #    2.4: Print the summary of the results, and write a 1-3 line comment explaining the basic
 #         interpretation of the results (e.g. coefficient, p-value, r-squared), the way you 
 #         might in an abstract.
 
 # Results summary
-print(results.summary())
+# Overall there is a negative correlation of 
+#An increase in unmployment rate bt 1% de
 
 
