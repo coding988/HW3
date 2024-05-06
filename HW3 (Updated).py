@@ -219,75 +219,76 @@ unemp_data = pd.read_csv(r'C:\Users\arifm\OneDrive\Documents\GitHub\HW3\unemp.cs
 epu_data = pd.read_excel(r'C:\Users\arifm\OneDrive\Documents\GitHub\HW3\policy_uncertainty.xlsx')
 unemp_data.columns = unemp_data.columns.str.lower()  #converting column names to lowercase for dataframe unemployment
 epu_data.columns = epu_data.columns.str.lower()  #converting column names to lowercase for dataframe policy uncertainty
-
-#defining a function to convert state names to abbreviations
 import us
+# Function to convert state names to abbreviations
 def state_abbrev(state_fullname):
     try:
         state = us.states.lookup(state_fullname)
         if state:
             return state.abbr
         else:
+            print(f"No abbreviation found for state: {state_fullname}")
             return None
     except ValueError:
+        print(f"Error: Could not lookup state abbreviation for: {state_fullname}")
         return None
+
 epu_data['state'] = epu_data['state'].apply(state_abbrev)
 
-# converting from month year to date format of epu dataframe and converting to same date format
-epu_data['date'] = pd.to_datetime(epu_data[['year', 'month']].assign(day=1)) 
+# Converting month-year to date format
+epu_data['date'] = pd.to_datetime(epu_data[['year', 'month']].assign(day=1))
 
-epu_data['date'] = epu_data['date'].dt.strftime('%Y-%m-%d') 
+# Filter EPU data for the specified date range
+start_date = pd.Timestamp('2020-01-01')
+end_date = pd.Timestamp('2022-12-31')
+filtered_epu_data = epu_data[(epu_data['date'] >= start_date) & (epu_data['date'] <= end_date)]
 
-# Merging dataframes "Unemployment" & "Policy Uncertainty"
-data_ump_epu = pd.merge(unemp_data, epu_data, on='state', how='inner')
-data_ump_epu.dropna(inplace=True)
-print(data_ump_epu.columns)
+# Merge Unemployment and EPU data
 
-#    2.2: Calculate the log-first-difference (LFD) of the EPU-C data
-import pandas as pd
-import statsmodels.api as sm
-data_ump_epu['LFD_EPU_C'] = data_ump_epu['epu_composite'].diff().apply(lambda x: x / data_ump_epu['epu_composite'].shift(1))
+data_ump_epu = pd.merge(unemp_data, filtered_epu_data, on='state', how='inner')
+
 data_ump_epu.dropna(inplace=True)
 
+# Calculate log-first-difference (LFD) of the EPU-C data
+data_ump_epu['LFD_EPU_C'] = data_ump_epu['epu_composite'].diff().div(data_ump_epu['epu_composite'].shift(1))
+data_ump_epu.dropna(inplace=True)
 
-#    2.2: Select five states and create one Matplotlib figure that shows the unemployment rate
-#         and the LFD of EPU-C over time for each state. Save the figure and commit it with 
-#         your code.
-five_states = ['Lousiana', 'Maine', 'Kentucky', 'Florida', 'Illinois']
+import random
+import matplotlib.pyplot as plt
+#Seclting randomly 5 states from the list of all unique states
+random.seed(42) 
+us_states = data_ump_epu['state'].unique()
+five_states = random.sample(list(us_states), 5)
 
-emp_lfd_state_data = data_ump_epu[data_ump_epu['state'].isin(five_states)]
-emp_lfd_state_data.dropna(subset=['unemp_rate', 'LFD_EPU_C'], inplace=True)##dropping missing values
+# plotting a matplotlib figure
+fig, axes = plt.subplots(nrows=len(five_states), ncols=1, figsize=(12, 15), sharex=True)
 
-# Filter data for the five states
-emp_lfd_state_data = data_ump_epu[data_ump_epu['state'].isin(five_states)]
+# Using loop for plotting data for five filteretd states 
 
-# Drop missing values from the selected columns
-emp_lfd_state_data.dropna(subset=['unemp_rate', 'LFD_EPU_C'], inplace=True)
+for i, state in enumerate(five_states):
+    five_states_merged = data_ump_epu[data_ump_epu['state'] == state]
+   
+    # Convert date column to string format
+    five_states_merged['date_x'] = five_states_merged['date_x'].astype(str)
+    five_states_merged['date_y'] = five_states_merged['date_y'].astype(str)
+    ax = axes[i]
+    ax.plot(five_states_merged['date_x'], five_states_merged['unemp_rate'], label='Unemployment Rate')
+    ax.plot(five_states_merged['date_y'], five_states_merged['LFD_EPU_C'], label='LFD of EPU-C')  # Corrected variable name
+    ax.set_title(f'{state}')
+    ax.legend()
+    axes[i].tick_params(axis='x', rotation=45, labelright=True)
+    axes[-1].set_xlabel('Date')
 
-
-print(emp_lfd_state_data.info())
-print(emp_lfd_state_data.columns)
-
-##using a lopp to creating a plot
-plt.figure(figsize=(12, 8))
-for state in five_states:
-    state_subset = data_ump_epu[data_ump_epu['state'] == state]
-    plt.plot(state_subset['date_y'], state_subset['unemp_rate'], label=f'{state} Unemployment Rate')
-    plt.plot(state_subset['date_y'], state_subset['LFD_EPU_C'], label=f'{state} LFD EPU-C')
-plt.title('Unemployment Rate and LFD of EPU-C Over Time for the five US States')
-plt.xlabel('Date')
-plt.ylabel('Value')
-plt.legend()
-plt.xticks(rotation=45)
 plt.tight_layout()
-plt.savefig('question_2_2_figure.png')
+plt.savefig('q2_2_figure.png', bbox_inches='tight')
 plt.show()
+
 
 #    2.3: Using statsmodels, regress the unemployment rate on the LFD of EPU-C and fixed
 #         effects for states. Include an intercept.
-
-X = sm.add_constant(emp_lfd_state_data['LFD_EPU_C']) #adding a intercept
-y = emp_lfd_state_data['unemp_rate']
+import statsmodels.api as sm
+X = sm.add_constant(data_ump_epu['LFD_EPU_C']) #adding an intercept
+y = data_ump_epu['unemp_rate']
 ols_model = sm.OLS(y, X)
 reg_results = ols_model.fit()
 print(reg_results.summary())
